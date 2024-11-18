@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            margin-top: 5px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .hidden {
+            display: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="page1">
+            <h1>Assignment Tracker</h1>
+            <div class="input-group">
+                <label for="assignment_name">Assignment Name:</label>
+                <input type="text" id="assignment_name" required>
+            </div>
+            <div class="input-group">
+                <label for="assignment_type">Assignment Type:</label>
+                <select id="assignment_type" required>
+                    <option value="">--Select--</option>
+                    <option value="Essays">Essays</option>
+                    <option value="Research Papers">Research Papers</option>
+                    <option value="Presentations">Presentations</option>
+                    <option value="Labs">Labs</option>
+                    <option value="Group Projects">Group Projects</option>
+                    <option value="Exams">Exams</option>
+                    <option value="Quizzes">Quizzes</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="due_date">Assignment Due Date:</label>
+                <input type="date" id="due_date" required>
+            </div>
+            <button onclick="goToNextPage()">Next</button>
+        </div>
+
+        <div id="page2" class="hidden">
+            <h1>Assignment Steps</h1>
+            <div id="stepsContainer"></div>
+            <button onclick="submitAssignment()">Submit Assignment</button>
+        </div>
+
+        <div id="resultPage" class="hidden">
+            <h1>Assignment Summary</h1>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Assignment & Segment</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="resultTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const stepsByType = {
+            "Essays": [
+                "Topic Selection",
+                "Research",
+                "Outline",
+                "Drafting",
+                "Revisions",
+                "Final Submission"
+            ],
+            "Research Papers": [
+                "Topic Selection",
+                "Literature Review",
+                "Research Design",
+                "Data Analysis",
+                "Drafting",
+                "Revisions",
+                "Final Submission"
+            ],
+            "Presentations": [
+                "Topic Selection",
+                "Research",
+                "Outline",
+                "Slide Creation",
+                "Practice",
+                "Final Presentation"
+            ],
+            "Labs": [
+                "Pre-Lab Preparation",
+                "Experimentation",
+                "Data Analysis",
+                "Lab Report Drafting",
+                "Revisions",
+                "Final Submission"
+            ],
+            "Group Projects": [
+                "Project Planning",
+                "Research and Data Collection",
+                "Drafting",
+                "Revisions",
+                "Final Submission"
+            ],
+            "Exams": [
+                "Study Plan",
+                "Review Materials",
+                "Practice Tests",
+                "Final Review",
+                "Exam Day"
+            ],
+            "Quizzes": [
+                "Review Materials",
+                "Practice Questions",
+                "Final Review",
+                "Quiz Day"
+            ]
+        };
+
+        function goToNextPage() {
+            const name = document.getElementById('assignment_name').value;
+            const type = document.getElementById('assignment_type').value;
+            const dueDate = document.getElementById('due_date').value;
+
+            if (!name || !type || !dueDate) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            // Populate steps for the selected type
+            const stepsContainer = document.getElementById('stepsContainer');
+            stepsContainer.innerHTML = ""; // Clear previous steps
+            const steps = stepsByType[type] || [];
+            steps.forEach(step => {
+                const stepDiv = document.createElement('div');
+                stepDiv.className = "input-group";
+                stepDiv.innerHTML = `
+                    <label>
+                        <input type="checkbox" value="${step}">
+                        ${step}
+                    </label>
+                    <label for="${step}_date">Step Date:</label>
+                    <input type="date" id="${step}_date">
+                `;
+                stepsContainer.appendChild(stepDiv);
+            });
+
+            if (type === "Other") {
+                const customStepDiv = document.createElement('div');
+                customStepDiv.className = "input-group";
+                customStepDiv.innerHTML = `
+                    <label for="custom_step">Custom Step Name:</label>
+                    <input type="text" id="custom_step">
+                    <label for="custom_step_date">Custom Step Date:</label>
+                    <input type="date" id="custom_step_date">
+                `;
+                stepsContainer.appendChild(customStepDiv);
+            }
+
+            document.getElementById('page1').classList.add('hidden');
+            document.getElementById('page2').classList.remove('hidden');
+        }
+
+        function submitAssignment() {
+            const assignmentName = document.getElementById('assignment_name').value;
+            const steps = Array.from(document.querySelectorAll('#stepsContainer input[type="checkbox"]:checked')).map(checkbox => {
+                const step = checkbox.value;
+                const date = document.getElementById(`${step}_date`).value;
+                return { step, date };
+            });
+
+            const customStepName = document.getElementById('custom_step')?.value;
+            const customStepDate = document.getElementById('custom_step_date')?.value;
+            if (customStepName && customStepDate) {
+                steps.push({ step: customStepName, date: customStepDate });
+            }
+
+            // Populate the result table
+            const resultTableBody = document.getElementById('resultTableBody');
+            resultTableBody.innerHTML = ""; // Clear previous results
+            steps.forEach(({ step, date }) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${assignmentName}: ${step}</td>
+                    <td>${date}</td>
+                `;
+                resultTableBody.appendChild(row);
+            });
+
+            document.getElementById('page2').classList.add('hidden');
+            document.getElementById('resultPage').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
