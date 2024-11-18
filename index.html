@@ -20,13 +20,13 @@
             display: block;
             margin-bottom: 5px;
         }
-        input, select, button {
+        input, select {
             width: 100%;
-            padding: 10px;
+            padding: 8px;
             box-sizing: border-box;
-            margin-top: 5px;
         }
         button {
+            padding: 10px 15px;
             background-color: #007BFF;
             color: white;
             border: none;
@@ -35,202 +35,204 @@
         button:hover {
             background-color: #0056b3;
         }
-        .hidden {
-            display: none;
+        .result {
+            margin-top: 20px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
-        th, td {
+        table, th, td {
             border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
         }
-        th {
-            background-color: #f2f2f2;
+        th, td {
+            padding: 10px;
+            text-align: left;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="page1">
-            <h1>Assignment Tracker</h1>
+        <h1>Assignment Tracker</h1>
+        <div id="step1">
             <div class="input-group">
-                <label for="assignment_name">Assignment Name:</label>
-                <input type="text" id="assignment_name" required>
+                <label for="assignmentName">Assignment Name:</label>
+                <input type="text" id="assignmentName">
             </div>
             <div class="input-group">
-                <label for="assignment_type">Assignment Type:</label>
-                <select id="assignment_type" required>
-                    <option value="">--Select--</option>
-                    <option value="Essays">Essays</option>
-                    <option value="Research Papers">Research Papers</option>
-                    <option value="Presentations">Presentations</option>
-                    <option value="Labs">Labs</option>
-                    <option value="Group Projects">Group Projects</option>
-                    <option value="Exams">Exams</option>
-                    <option value="Quizzes">Quizzes</option>
+                <label for="assignmentType">Assignment Type:</label>
+                <select id="assignmentType">
+                    <option value="">Select Type</option>
+                    <option value="Essay">Essay</option>
+                    <option value="ResearchPaper">Research Paper</option>
+                    <option value="Presentation">Presentation</option>
+                    <option value="GroupProject">Group Project</option>
+                    <option value="Lab">Lab</option>
+                    <option value="Exam">Exam</option>
+                    <option value="Quiz">Quiz</option>
+                    <option value="Homework">Homework</option>
                     <option value="Other">Other</option>
                 </select>
             </div>
             <div class="input-group">
-                <label for="due_date">Assignment Due Date:</label>
-                <input type="date" id="due_date" required>
+                <label for="assignmentDueDate">Assignment Due Date:</label>
+                <input type="date" id="assignmentDueDate">
             </div>
-            <button onclick="goToNextPage()">Next</button>
+            <button onclick="proceedToStep2()">Next</button>
         </div>
 
-        <div id="page2" class="hidden">
-            <h1>Assignment Steps</h1>
-            <div id="stepsContainer"></div>
-            <button onclick="submitAssignment()">Submit Assignment</button>
+        <div id="step2" style="display:none;">
+            <h2>Select Segments</h2>
+            <div id="segmentsContainer"></div>
+            <button onclick="generateTable()">Generate Table</button>
         </div>
 
-        <div id="resultPage" class="hidden">
-            <h1>Assignment Summary</h1>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Assignment & Segment</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody id="resultTableBody"></tbody>
-            </table>
+        <div id="step3" style="display:none;">
+            <h2>Generated Table</h2>
+            <div class="result">
+                <table id="assignmentTable">
+                    <thead>
+                        <tr>
+                            <th>Assignment & Segment</th>
+                            <th>Due Date</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <button onclick="downloadAsCSV()">Download as CSV</button>
+            <button onclick="downloadAsICS()">Download as ICS</button>
         </div>
     </div>
 
     <script>
-        const stepsByType = {
-            "Essays": [
-                "Topic Selection",
-                "Research",
-                "Outline",
-                "Drafting",
-                "Revisions",
-                "Final Submission"
-            ],
-            "Research Papers": [
-                "Topic Selection",
-                "Literature Review",
-                "Research Design",
-                "Data Analysis",
-                "Drafting",
-                "Revisions",
-                "Final Submission"
-            ],
-            "Presentations": [
-                "Topic Selection",
-                "Research",
-                "Outline",
-                "Slide Creation",
-                "Practice",
-                "Final Presentation"
-            ],
-            "Labs": [
-                "Pre-Lab Preparation",
-                "Experimentation",
-                "Data Analysis",
-                "Lab Report Drafting",
-                "Revisions",
-                "Final Submission"
-            ],
-            "Group Projects": [
-                "Project Planning",
-                "Research and Data Collection",
-                "Drafting",
-                "Revisions",
-                "Final Submission"
-            ],
-            "Exams": [
-                "Study Plan",
-                "Review Materials",
-                "Practice Tests",
-                "Final Review",
-                "Exam Day"
-            ],
-            "Quizzes": [
-                "Review Materials",
-                "Practice Questions",
-                "Final Review",
-                "Quiz Day"
-            ]
+        const segments = {
+            Essay: ["Topic Selection", "Research", "Outline", "Drafting", "Revisions", "Final Submission"],
+            ResearchPaper: ["Topic Selection", "Literature Review", "Research Design", "Data Analysis", "Drafting", "Revisions", "Final Submission"],
+            Presentation: ["Topic Selection", "Research", "Outline", "Slide Creation", "Practice", "Final Presentation"],
+            GroupProject: ["Project Planning", "Research and Data Collection", "Drafting", "Revisions", "Final Submission"],
+            Lab: ["Pre-Lab Preparation", "Experimentation", "Data Analysis", "Lab Report Drafting", "Revisions", "Final Submission"],
+            Exam: ["Study Plan", "Review Materials", "Practice Tests", "Final Review", "Exam Day"],
+            Quiz: ["Review Materials", "Practice Questions", "Final Review", "Quiz Day"],
+            Homework: [],
+            Other: []
         };
 
-        function goToNextPage() {
-            const name = document.getElementById('assignment_name').value;
-            const type = document.getElementById('assignment_type').value;
-            const dueDate = document.getElementById('due_date').value;
-
-            if (!name || !type || !dueDate) {
-                alert("Please fill in all fields.");
+        function proceedToStep2() {
+            const assignmentType = document.getElementById("assignmentType").value;
+            if (!assignmentType) {
+                alert("Please select an assignment type.");
                 return;
             }
 
-            // Populate steps for the selected type
-            const stepsContainer = document.getElementById('stepsContainer');
-            stepsContainer.innerHTML = ""; // Clear previous steps
-            const steps = stepsByType[type] || [];
-            steps.forEach(step => {
-                const stepDiv = document.createElement('div');
-                stepDiv.className = "input-group";
-                stepDiv.innerHTML = `
-                    <label>
-                        <input type="checkbox" value="${step}">
-                        ${step}
-                    </label>
-                    <label for="${step}_date">Step Date:</label>
-                    <input type="date" id="${step}_date">
-                `;
-                stepsContainer.appendChild(stepDiv);
+            const segmentsContainer = document.getElementById("segmentsContainer");
+            segmentsContainer.innerHTML = ""; // Clear previous segments
+            const selectedSegments = segments[assignmentType] || [];
+
+            selectedSegments.forEach(segment => {
+                const div = document.createElement("div");
+                div.classList.add("input-group");
+
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.value = segment;
+
+                const label = document.createElement("label");
+                label.textContent = segment;
+
+                const dateInput = document.createElement("input");
+                dateInput.type = "date";
+                dateInput.className = "segment-date";
+
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                div.appendChild(dateInput);
+
+                segmentsContainer.appendChild(div);
             });
 
-            if (type === "Other") {
-                const customStepDiv = document.createElement('div');
-                customStepDiv.className = "input-group";
-                customStepDiv.innerHTML = `
-                    <label for="custom_step">Custom Step Name:</label>
-                    <input type="text" id="custom_step">
-                    <label for="custom_step_date">Custom Step Date:</label>
-                    <input type="date" id="custom_step_date">
-                `;
-                stepsContainer.appendChild(customStepDiv);
-            }
-
-            document.getElementById('page1').classList.add('hidden');
-            document.getElementById('page2').classList.remove('hidden');
+            document.getElementById("step1").style.display = "none";
+            document.getElementById("step2").style.display = "block";
         }
 
-        function submitAssignment() {
-            const assignmentName = document.getElementById('assignment_name').value;
-            const steps = Array.from(document.querySelectorAll('#stepsContainer input[type="checkbox"]:checked')).map(checkbox => {
-                const step = checkbox.value;
-                const date = document.getElementById(`${step}_date`).value;
-                return { step, date };
+        function generateTable() {
+            const assignmentName = document.getElementById("assignmentName").value;
+            const tableBody = document.querySelector("#assignmentTable tbody");
+            tableBody.innerHTML = ""; // Clear previous table
+
+            const checkboxes = document.querySelectorAll("#segmentsContainer input[type='checkbox']");
+            checkboxes.forEach((checkbox, index) => {
+                if (checkbox.checked) {
+                    const row = document.createElement("tr");
+
+                    const nameCell = document.createElement("td");
+                    nameCell.textContent = `${assignmentName} - ${checkbox.value}`;
+
+                    const dateCell = document.createElement("td");
+                    dateCell.textContent = document.querySelectorAll(".segment-date")[index].value;
+
+                    row.appendChild(nameCell);
+                    row.appendChild(dateCell);
+                    tableBody.appendChild(row);
+                }
             });
 
-            const customStepName = document.getElementById('custom_step')?.value;
-            const customStepDate = document.getElementById('custom_step_date')?.value;
-            if (customStepName && customStepDate) {
-                steps.push({ step: customStepName, date: customStepDate });
-            }
+            document.getElementById("step2").style.display = "none";
+            document.getElementById("step3").style.display = "block";
+        }
 
-            // Populate the result table
-            const resultTableBody = document.getElementById('resultTableBody');
-            resultTableBody.innerHTML = ""; // Clear previous results
-            steps.forEach(({ step, date }) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${assignmentName}: ${step}</td>
-                    <td>${date}</td>
-                `;
-                resultTableBody.appendChild(row);
+        function downloadAsCSV() {
+            const table = document.getElementById("assignmentTable");
+            let csvContent = 'data:text/csv;charset=utf-8,';
+
+            const rows = table.querySelectorAll("tr");
+            rows.forEach(row => {
+                const cells = row.querySelectorAll("th, td");
+                const rowContent = Array.from(cells)
+                    .map(cell => `"${cell.textContent}"`)
+                    .join(",");
+                csvContent += rowContent + "\n";
             });
 
-            document.getElementById('page2').classList.add('hidden');
-            document.getElementById('resultPage').classList.remove('hidden');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "assignments.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadAsICS() {
+            let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nCALSCALE:GREGORIAN\n";
+            const table = document.getElementById("assignmentTable");
+            const rows = table.querySelectorAll("tbody tr");
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll("td");
+                const assignment = cells[0].textContent;
+                const dueDate = cells[1].textContent;
+
+                const icsDate = dueDate.replace(/-/g, "");
+                icsContent += `
+BEGIN:VEVENT
+SUMMARY:${assignment}
+DTSTART;VALUE=DATE:${icsDate}
+DTEND;VALUE=DATE:${icsDate}
+END:VEVENT
+`;
+            });
+
+            icsContent += "END:VCALENDAR";
+
+            const blob = new Blob([icsContent], { type: "text/calendar" });
+            const link = document.createElement("a");
+            link.setAttribute("href", URL.createObjectURL(blob));
+            link.setAttribute("download", "assignments.ics");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
