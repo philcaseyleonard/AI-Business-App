@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assignment Tracker</title>
+    <title>Assignment Scheduler</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,10 +41,9 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
         }
         table, th, td {
-            border: 1px solid #ddd;
+            border: 1px solid black;
         }
         th, td {
             padding: 10px;
@@ -53,8 +52,11 @@
     </style>
 </head>
 <body>
+
     <div class="container">
-        <h1>Assignment Tracker</h1>
+        <h1>Assignment Scheduler</h1>
+        
+        <!-- Step 1: Assignment Input -->
         <div id="step1">
             <div class="input-group">
                 <label for="assignmentName">Assignment Name:</label>
@@ -62,34 +64,37 @@
             </div>
             <div class="input-group">
                 <label for="assignmentType">Assignment Type:</label>
-                <select id="assignmentType">
-                    <option value="">Select Type</option>
-                    <option value="Essay">Essay</option>
-                    <option value="ResearchPaper">Research Paper</option>
-                    <option value="Presentation">Presentation</option>
-                    <option value="GroupProject">Group Project</option>
-                    <option value="Lab">Lab</option>
-                    <option value="Exam">Exam</option>
-                    <option value="Quiz">Quiz</option>
-                    <option value="Homework">Homework</option>
-                    <option value="Other">Other</option>
+                <select id="assignmentType" onchange="showSegments()">
+                    <option value="homework">Homework</option>
+                    <option value="essay">Essay</option>
+                    <option value="researchPaper">Research Paper</option>
+                    <option value="presentation">Presentation</option>
+                    <option value="groupProject">Group Project</option>
+                    <option value="lab">Lab</option>
+                    <option value="exam">Exam</option>
+                    <option value="quiz">Quiz</option>
                 </select>
             </div>
             <div class="input-group">
-                <label for="assignmentDueDate">Assignment Due Date:</label>
-                <input type="date" id="assignmentDueDate">
+                <label for="dueDate">Assignment Due Date:</label>
+                <input type="date" id="dueDate">
             </div>
-            <button onclick="proceedToStep2()">Next</button>
+            <button onclick="goToStep2()">Next</button>
         </div>
 
+        <!-- Step 2: Assignment Segments -->
         <div id="step2" style="display:none;">
-            <h2>Select Segments</h2>
-            <div id="segmentsContainer"></div>
-            <button onclick="generateTable()">Generate Table</button>
+            <h2>Choose Segments</h2>
+            <div id="segments"></div>
+            <button onclick="goToStep3()">Next</button>
         </div>
 
+        <!-- Step 3: Generated Table and Download Options -->
         <div id="step3" style="display:none;">
             <h2>Generated Table</h2>
+            <!-- New Message -->
+            <p>Download as <strong>ICS</strong> to automatically add to Apple Calendar or <strong>CSV</strong> for import into Google Calendar.</p>
+            
             <div class="result">
                 <table id="assignmentTable">
                     <thead>
@@ -101,138 +106,101 @@
                     <tbody></tbody>
                 </table>
             </div>
+
+            <!-- Buttons for downloading -->
             <button onclick="downloadAsCSV()">Download as CSV</button>
             <button onclick="downloadAsICS()">Download as ICS</button>
         </div>
     </div>
 
     <script>
-        const segments = {
-            Essay: ["Topic Selection", "Research", "Outline", "Drafting", "Revisions", "Final Submission"],
-            ResearchPaper: ["Topic Selection", "Literature Review", "Research Design", "Data Analysis", "Drafting", "Revisions", "Final Submission"],
-            Presentation: ["Topic Selection", "Research", "Outline", "Slide Creation", "Practice", "Final Presentation"],
-            GroupProject: ["Project Planning", "Research and Data Collection", "Drafting", "Revisions", "Final Submission"],
-            Lab: ["Pre-Lab Preparation", "Experimentation", "Data Analysis", "Lab Report Drafting", "Revisions", "Final Submission"],
-            Exam: ["Study Plan", "Review Materials", "Practice Tests", "Final Review", "Exam Day"],
-            Quiz: ["Review Materials", "Practice Questions", "Final Review", "Quiz Day"],
-            Homework: [],
-            Other: []
+        const segmentsData = {
+            homework: ['Complete Homework', 'Review Notes'],
+            essay: ['Topic Selection', 'Research', 'Outline', 'Drafting', 'Revisions', 'Final Submission'],
+            researchPaper: ['Topic Selection', 'Literature Review', 'Research Design', 'Data Analysis', 'Drafting', 'Revisions', 'Final Submission'],
+            presentation: ['Topic Selection', 'Research', 'Outline', 'Slide Creation', 'Practice', 'Final Presentation'],
+            groupProject: ['Project Planning', 'Research and Data Collection', 'Drafting', 'Revisions', 'Final Submission'],
+            lab: ['Pre-Lab Preparation', 'Experimentation', 'Data Analysis', 'Lab Report Drafting', 'Revisions', 'Final Submission'],
+            exam: ['Study Plan', 'Review Materials', 'Practice Tests', 'Final Review', 'Exam Day'],
+            quiz: ['Review Materials', 'Practice Questions', 'Final Review', 'Quiz Day']
         };
 
-        function proceedToStep2() {
-            const assignmentType = document.getElementById("assignmentType").value;
-            if (!assignmentType) {
-                alert("Please select an assignment type.");
-                return;
-            }
-
-            const segmentsContainer = document.getElementById("segmentsContainer");
-            segmentsContainer.innerHTML = ""; // Clear previous segments
-            const selectedSegments = segments[assignmentType] || [];
-
-            selectedSegments.forEach(segment => {
-                const div = document.createElement("div");
-                div.classList.add("input-group");
-
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.value = segment;
-
-                const label = document.createElement("label");
-                label.textContent = segment;
-
-                const dateInput = document.createElement("input");
-                dateInput.type = "date";
-                dateInput.className = "segment-date";
-
-                div.appendChild(checkbox);
-                div.appendChild(label);
-                div.appendChild(dateInput);
-
-                segmentsContainer.appendChild(div);
+        function goToStep2() {
+            const assignmentType = document.getElementById('assignmentType').value;
+            const segments = segmentsData[assignmentType];
+            let segmentHTML = '';
+            segments.forEach(segment => {
+                segmentHTML += `
+                    <div class="input-group">
+                        <label for="${segment}">${segment}:</label>
+                        <input type="checkbox" id="${segment}"> 
+                        <input type="date" id="${segment}Date">
+                    </div>
+                `;
             });
-
-            document.getElementById("step1").style.display = "none";
-            document.getElementById("step2").style.display = "block";
+            document.getElementById('segments').innerHTML = segmentHTML;
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'block';
         }
 
-        function generateTable() {
-            const assignmentName = document.getElementById("assignmentName").value;
-            const tableBody = document.querySelector("#assignmentTable tbody");
-            tableBody.innerHTML = ""; // Clear previous table
+        function goToStep3() {
+            const assignmentName = document.getElementById('assignmentName').value;
+            const assignmentType = document.getElementById('assignmentType').value;
+            const segments = segmentsData[assignmentType];
+            const tableBody = document.querySelector('#assignmentTable tbody');
+            tableBody.innerHTML = '';
 
-            const checkboxes = document.querySelectorAll("#segmentsContainer input[type='checkbox']");
-            checkboxes.forEach((checkbox, index) => {
-                if (checkbox.checked) {
-                    const row = document.createElement("tr");
-
-                    const nameCell = document.createElement("td");
-                    nameCell.textContent = `${assignmentName} - ${checkbox.value}`;
-
-                    const dateCell = document.createElement("td");
-                    dateCell.textContent = document.querySelectorAll(".segment-date")[index].value;
-
-                    row.appendChild(nameCell);
-                    row.appendChild(dateCell);
-                    tableBody.appendChild(row);
+            segments.forEach(segment => {
+                const isChecked = document.getElementById(segment).checked;
+                const date = document.getElementById(`${segment}Date`).value;
+                if (isChecked && date) {
+                    const row = `
+                        <tr>
+                            <td>${assignmentName} - ${segment}</td>
+                            <td>${date}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
                 }
             });
 
-            document.getElementById("step2").style.display = "none";
-            document.getElementById("step3").style.display = "block";
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('step3').style.display = 'block';
         }
 
         function downloadAsCSV() {
-            const table = document.getElementById("assignmentTable");
-            let csvContent = 'data:text/csv;charset=utf-8,';
-
-            const rows = table.querySelectorAll("tr");
-            rows.forEach(row => {
-                const cells = row.querySelectorAll("th, td");
-                const rowContent = Array.from(cells)
-                    .map(cell => `"${cell.textContent}"`)
-                    .join(",");
-                csvContent += rowContent + "\n";
+            const table = document.getElementById('assignmentTable');
+            let csv = 'Assignment & Segment,Due Date\n';
+            Array.from(table.rows).forEach((row, index) => {
+                if (index > 0) {
+                    const cells = row.cells;
+                    csv += `${cells[0].textContent},${cells[1].textContent}\n`;
+                }
             });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "assignments.csv");
-            document.body.appendChild(link);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'assignments.csv';
             link.click();
-            document.body.removeChild(link);
         }
 
         function downloadAsICS() {
-            let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nCALSCALE:GREGORIAN\n";
-            const table = document.getElementById("assignmentTable");
-            const rows = table.querySelectorAll("tbody tr");
-
-            rows.forEach(row => {
-                const cells = row.querySelectorAll("td");
-                const assignment = cells[0].textContent;
-                const dueDate = cells[1].textContent;
-
-                const icsDate = dueDate.replace(/-/g, "");
-                icsContent += `
-BEGIN:VEVENT
-SUMMARY:${assignment}
-DTSTART;VALUE=DATE:${icsDate}
-DTEND;VALUE=DATE:${icsDate}
-END:VEVENT
-`;
+            const table = document.getElementById('assignmentTable');
+            let ics = 'BEGIN:VCALENDAR\nVERSION:2.0\nCALSCALE:GREGORIAN\n';
+            Array.from(table.rows).forEach((row, index) => {
+                if (index > 0) {
+                    const cells = row.cells;
+                    const date = new Date(cells[1].textContent);
+                    const dateStr = date.toISOString().replace(/-|:|\.\d+/g, '');
+                    ics += `BEGIN:VEVENT\nSUMMARY:${cells[0].textContent}\nDTSTART:${dateStr}\nDTEND:${dateStr}\nEND:VEVENT\n`;
+                }
             });
-
-            icsContent += "END:VCALENDAR";
-
-            const blob = new Blob([icsContent], { type: "text/calendar" });
-            const link = document.createElement("a");
-            link.setAttribute("href", URL.createObjectURL(blob));
-            link.setAttribute("download", "assignments.ics");
-            document.body.appendChild(link);
+            ics += 'END:VCALENDAR';
+            const blob = new Blob([ics], { type: 'text/calendar' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'assignments.ics';
             link.click();
-            document.body.removeChild(link);
         }
     </script>
 </body>
